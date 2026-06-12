@@ -1,5 +1,10 @@
 import {getDomainsFromURLs} from '../../../../util/torrentPropertiesUtil';
-import {booleanTransformer, numberTransformer, stringTransformer} from '../../util/rTorrentMethodCallUtil';
+import {
+  base64StringTransformer,
+  booleanTransformer,
+  numberTransformer,
+  stringTransformer,
+} from '../../util/rTorrentMethodCallUtil';
 
 const torrentListMethodCallConfigs = {
   hash: {
@@ -8,6 +13,12 @@ const torrentListMethodCallConfigs = {
   },
   name: {
     methodCall: 'd.name=',
+    preferredMethodCalls: [
+      {
+        methodCall: 'd.name.base64=',
+        transformValue: base64StringTransformer,
+      },
+    ],
     transformValue: stringTransformer,
   },
   message: {

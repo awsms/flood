@@ -1,8 +1,14 @@
-import {numberTransformer, stringTransformer} from '../../util/rTorrentMethodCallUtil';
+import {base64PathComponentsTransformer, numberTransformer, stringTransformer} from '../../util/rTorrentMethodCallUtil';
 
 const torrentContentMethodCallConfigs = {
   path: {
     methodCall: 'f.path=',
+    preferredMethodCalls: [
+      {
+        methodCall: 'f.path_components.base64=',
+        transformValue: base64PathComponentsTransformer,
+      },
+    ],
     transformValue: stringTransformer,
   },
   priority: {
