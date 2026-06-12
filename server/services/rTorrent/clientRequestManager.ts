@@ -8,6 +8,9 @@ import type {MultiMethodCalls} from './util/rTorrentMethodCallUtil';
 import {methodCallJSON, methodCallXML} from './util/scgiUtil';
 
 type MethodCallParameters = Array<string | Buffer | MultiMethodCalls>;
+type MethodCallOptions = {
+  useJSON?: boolean;
+};
 
 class ClientRequestManager {
   queue: PQueue;
@@ -27,7 +30,7 @@ class ClientRequestManager {
     this.queue = new PQueue({autoStart: true, concurrency: 1});
   }
 
-  sendMethodCall = (methodName: string, parameters: MethodCallParameters) => {
+  sendMethodCall = (methodName: string, parameters: MethodCallParameters, options: MethodCallOptions = {}) => {
     const connectionOptions: NetConnectOpts =
       this.connectionSettings.type === 'socket'
         ? {
@@ -38,14 +41,16 @@ class ClientRequestManager {
             port: this.connectionSettings.port,
           };
 
-    return this.isJSONCapable
+    const useJSON = options.useJSON ?? this.isJSONCapable;
+
+    return useJSON
       ? methodCallJSON(connectionOptions, methodName, parameters)
       : methodCallXML(connectionOptions, methodName, parameters);
   };
 
-  methodCall = (methodName: string, parameters: MethodCallParameters) => {
+  methodCall = (methodName: string, parameters: MethodCallParameters, options: MethodCallOptions = {}) => {
     // We only allow one request at a time.
-    return this.queue.add(() => this.sendMethodCall(methodName, parameters));
+    return this.queue.add(() => this.sendMethodCall(methodName, parameters, options));
   };
 }
 

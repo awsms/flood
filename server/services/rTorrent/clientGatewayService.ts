@@ -59,25 +59,14 @@ class RTorrentClientGatewayService extends ClientGatewayService {
   clientRequestManager = new ClientRequestManager(this.user.client as RTorrentConnectionSettings);
   availableMethodCalls = this.fetchAvailableMethodCalls();
 
-  // workaround: rTorrent instances might reject large d.multicall2 JSON-RPC requests
-  // even though the equivalent XML-RPC call succeeds. rakshasa/rtorrent#1596
+  // Workaround: rTorrent 0.16.x can leave SCGI unresponsive after JSON-RPC
+  // torrent-list d.multicall2 calls, while the equivalent XML-RPC call succeeds.
   private async fetchTorrentListResponses() {
     const methodCalls = ['', 'main'].concat((await this.availableMethodCalls).torrentList);
 
-    try {
-      return await this.clientRequestManager
-        .methodCall('d.multicall2', methodCalls)
-        .then(this.processClientRequestSuccess, this.processRTorrentRequestError);
-    } catch (error) {
-      if (!this.clientRequestManager.isJSONCapable || (error as RPCError)?.code !== -32700) {
-        throw error;
-      }
-
-      this.clientRequestManager.isJSONCapable = false;
-      return this.clientRequestManager
-        .methodCall('d.multicall2', methodCalls)
-        .then(this.processClientRequestSuccess, this.processRTorrentRequestError);
-    }
+    return this.clientRequestManager
+      .methodCall('d.multicall2', methodCalls, {useJSON: false})
+      .then(this.processClientRequestSuccess, this.processRTorrentRequestError);
   }
 
   async getPreferredMethod(methods: string[]): Promise<string> {
